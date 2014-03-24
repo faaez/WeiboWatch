@@ -33,7 +33,7 @@ angular.module('birdwatch.services').factory('tweets', function ($http, utils, $
         }
         else $location.path("");
 
-        /** handle incoming tweets: add to tweetsCache array, run callback at most every second */
+        /** handle incoming tweets: add to tweetsCache array,run callback at most every second */
         var cachedCallback = function(msg) {
             tweetsCache = tweetsCache.concat(utils.formatTweet(JSON.parse(msg.data)));
             _.throttle(function() {        // throttle because insertion too expensive on high traffic searches
