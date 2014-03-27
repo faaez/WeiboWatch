@@ -8,19 +8,19 @@ angular.module('birdwatch.services').factory('cf', function (utils) {
     // dimensions are fast queries on data, e.g. view sorted by followers_count or retweet_count of the original message
     var cf = crossfilter([]);
     var tweetIdDim   = cf.dimension(function(t) { return t.id; });
-    var followersDim = cf.dimension(function(t) { return t.user.followers_count; });
+    var followersDim = cf.dimension(function(t) { return t.user_followers_count; });
     var retweetsDim  = cf.dimension(function(t) {
-        if (t.hasOwnProperty("retweeted_status")) { return t.retweeted_status.retweet_count; }
+        if (t["retweeted_status"] != null ) { return t.reposts_count; }
         else return 0;
     });
     var originalIdDim  = cf.dimension(function(t) {
-        if (t.hasOwnProperty("retweeted_status")) { return t.retweeted_status.id; }
+        if (t["retweeted_status"] != null ) { return t.retweeted_status.id; }
         else return 0;
     });
 
     // Higher-order function, returns a function that rounds time down. Interval s is specified in seconds.
     // Example: returned function makes Jan 1, 2012, 16:45:00 out of Jan 1, 2012, 16:45:55 when interval is 60s
-    function dateRound(s) { return function(t) { return s * Math.floor(Date.parse(t.created_at) / (s * 1000)) }; }
+    function dateRound(s) { return function(t) { return s * Math.floor(Date.parse(t.date) / (s * 1000)) }; }
 
     var byMinGrp   = cf.dimension(dateRound(       60 )).group();
     var by15MinGrp = cf.dimension(dateRound(    15*60 )).group();

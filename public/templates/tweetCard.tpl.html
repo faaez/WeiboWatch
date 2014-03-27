@@ -1,7 +1,7 @@
 <div class="tweet">
     <span> 
         <a href="http://www.weibo.com/{{ tweet.user_name }}" target="_blank">
-            <img class="thumbnail" ng-src="{{ tweet.profile_img_url }}" />
+            <img class="thumbnail" ng-src="{{ tweet.profile_image_url }}" />
         </a>
     </span>
 
@@ -10,7 +10,7 @@
         <span class="username" ng-bind="tweet.user_name"></span>
     </a>
     <span class="username_screen">&#64;{{tweet.user_name}}</span>
-    <div class="pull-right timeInterval">{{tweet.created_at}}</div>
+    <div class="pull-right timeInterval">{{tweet.date | fromNow }} </div>
     <div class="tweettext">
         <div ng-bind-html-unsafe="tweet.htmlText"></div>
         <div class="pull-left timeInterval">{{tweet.user_followers_count | numberFormat}} followers</div>
