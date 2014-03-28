@@ -49,20 +49,18 @@ object TwitterClient {
     * Can this be ended explicitly from here though, without resetting the whole underlying clinet? */
   def start() {
     println("Starting client for topics " + topics)
-    var url = twitterURL + java.net.URLEncoder.encode(topics.mkString("%2B").replace(" ", "%20"), "UTF-8")
-    println(url)
+    var url = twitterURL + java.net.URLEncoder.encode(topics.mkString("+").replace(" ", "%20"), "UTF-8")
     // WS.url(url).get(_ => tweetIteratee)
     WS.url(url).get().map { response =>
       (response.json \ "messages") match {
         case JsObject(posts) => {
           posts.map({i => 
             var json = i._2
-            println(elasticTweetURL+"_search?q=id:"+(json \ "id").toString().replaceAll("\"",""))
             WS.url(elasticTweetURL+"_search?q=id:"+(json \ "id").toString().replaceAll("\"","")).get().map { res => 
               var processThis : Boolean = false
-              println(res.json)
-              if (res.json \\ "status".toString().replaceAll("\"","") == 400) {
-
+              println((res.json \\ "status")(0).toString())
+              if ((res.json \\ "status")(0).toString() == "400") {
+                println("yeah success")
                 processThis = true
               }
               else {
