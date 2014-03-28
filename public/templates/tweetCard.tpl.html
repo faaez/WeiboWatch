@@ -1,12 +1,12 @@
 <div class="tweet">
     <span> 
-        <a href="http://www.weibo.com/{{ tweet.user_name }}" target="_blank">
+        <a href="http://www.weibo.com/{{ tweet.user_id }}" target="_blank">
             <img class="thumbnail" ng-src="{{ tweet.profile_image_url }}" />
         </a>
     </span>
 
     <a tooltip-placement="bottom" tooltip="click to visit Weibo profile"
-       href="http://www.weibo.com/{{ tweet.user_name }}" target="_blank">
+       href="http://www.weibo.com/{{ tweet.user_id }}" target="_blank">
         <span class="username" ng-bind="tweet.user_name"></span>
     </a>
     <span class="username_screen">&#64;{{tweet.user_name}}</span>

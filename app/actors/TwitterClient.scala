@@ -22,6 +22,7 @@ object TwitterClient {
   val elasticPercolatorURL = Conf.get("elastic.PercolatorURL")
   val backOffInterval = 60 * 15 * 1000
   val retryInterval = 60 * 1000
+  val lastPostOrderValue = null
 
   def now = DateTime.now.getMillis
 
@@ -57,7 +58,10 @@ object TwitterClient {
       }
           
       val json = Json.parse(chunkString)
-      (json \ "id_str").asOpt[String].map { id => WS.url(elasticTweetURL + id).put(json) }
+      lastPostOrderValue = json["order_by_value"]
+
+      (json \ "id").asOpt[String].map { id => WS.url(elasticTweetURL + id).put(json) }
+      json["text"].
       matchAndPush(json)
     }
   }
@@ -66,7 +70,11 @@ object TwitterClient {
     * Can this be ended explicitly from here though, without resetting the whole underlying client? */
   def start() {
     println("Starting client for topics " + topics)
-    val url = twitterURL + topics.mkString("%2C").replace(" ", "%20")
+    val url = twitterURL + topics.mkString("%2B").replace(" ", "%20")
+    if (lastPostOrderValue != null) {
+      url += "&min-order-by-value="+lastPostOrderValue
+    }
+    WS.url(url).withRequestTimeout(-1).get(_ => tweetIteratee)
     // WS.url(url).withRequestTimeout(-1).sign(OAuthCalculator(Conf.consumerKey, Conf.accessToken)).get(_ => tweetIteratee)
   }
 

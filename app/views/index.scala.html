@@ -41,7 +41,7 @@
                     
                     <div class="nav-collapse">
                         
-                            <!-- Tweets. Project info -->
+                            <!-- Posts. Project info -->
                         <ul class="nav navbar-nav pull-right">
                             <li class="dropdown">
                                 <a href="#" class="dropdown-toggle" data-toggle="dropdown">About
@@ -62,7 +62,7 @@
                                 <a href="#" class="dropdown-toggle" data-toggle="dropdown">Settings
                                     <b class="caret"></b></a>
                                 <ul class="dropdown-menu">
-                                    <li><a href="#">Previous Tweets:</a></li>
+                                    <li><a href="#">Previous Posts:</a></li>
                                     <li>
                                         <a>
                                             <select class="form-control" ng-model="prevSize" 
@@ -81,8 +81,8 @@
                             </li>
                         </ul>
 
-                        <div class="navbar-text col-lg-2 pull-right">Tweet count: <a>
-                            <span tooltip-placement="bottom" tooltip="Tweets currently loaded"
+                        <div class="navbar-text col-lg-2 pull-right">Post count: <a>
+                            <span tooltip-placement="bottom" tooltip="Posts currently loaded"
                                 ng-bind="cf.noItems()"></span></a>
                         </div>
                         
@@ -90,7 +90,7 @@
                 </div>
             </div>
 
-            <!-- Tweets column with Pagination -->
+            <!-- Posts column with Pagination -->
             <div class="container container-fluid">
                 <div class="row">
                     <!-- Pagination -->
@@ -106,13 +106,13 @@
                     <button type="button" class="btn btn-primary" ng-model="sortModel"
                         data-btn-radio="'followers'">followers</button>
                     <button type="button" class="btn btn-primary" ng-model="sortModel"
-                        data-btn-radio="'retweets'">retweets</button>
+                        data-btn-radio="'retweets'">reposts</button>
                 </div>
 
                 <!-- Main page layout -->
                 <div class="row">
 
-                    <!-- Tweet Cards inside frame -->
+                    <!-- Post Cards inside frame -->
                     <div class="col-lg-4" id="tweet-frame">
                         <div class="tweetCard" data-ng-repeat="tweet in cf.tweetPage(currentPage, pageSize, sortModel)"
                             data-tweet="tweet"></div>
