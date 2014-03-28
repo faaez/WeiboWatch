@@ -60,10 +60,19 @@ object TwitterClient {
       val json = Json.parse(chunkString)
       lastPostOrderValue = json["order_by_value"]
 
-      (json \ "id").asOpt[String].map { id => WS.url(elasticTweetURL + id).put(json) }
-      json["text"].
+      json["id"] = json["status_id"]
+      json.pop("status_id")
       val pattern = "[^0-9]".r
-      json["date"] = pattern replaceAllIn(json["created_at"], "").substring(0,8)
+      val date = json["created_at"]
+      date = date.substring(date.indexOf(">"))
+      date = pattern replaceAllIn(date, "")
+      date = date.substring(0,4) + "-" + date.substring(4,6) + "-" + date.substring(6,8)
+      json["date"] = date
+      val html_text = scala.xml.XML.loadString(json["text"])
+      val text = html_text.text
+      json["text"] = text
+
+      (json \ "id").asOpt[String].map { id => WS.url(elasticTweetURL + id).put(json) }
       matchAndPush(json)
     }
   }
