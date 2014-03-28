@@ -50,19 +50,29 @@ object TwitterClient {
   def start() {
     println("Starting client for topics " + topics)
     var url = twitterURL + java.net.URLEncoder.encode(topics.mkString("%2B").replace(" ", "%20"), "UTF-8")
-  
+    println(url)
     // WS.url(url).get(_ => tweetIteratee)
     WS.url(url).get().map { response =>
       (response.json \ "messages") match {
         case JsObject(posts) => {
           posts.map({i => 
             var json = i._2
-
+            println(elasticTweetURL+"_search?q=id:"+(json \ "id").toString().replaceAll("\"",""))
             WS.url(elasticTweetURL+"_search?q=id:"+(json \ "id").toString().replaceAll("\"","")).get().map { res => 
-              val alreadyIndexed = ((res.json \ "hits") \ "total").toString().replaceAll("\"","").toInt
-              
-              if (alreadyIndexed == 0) {
-                
+              var processThis : Boolean = false
+              println(res.json)
+              if (res.json \\ "status".toString().replaceAll("\"","") == 400) {
+
+                processThis = true
+              }
+              else {
+                val alreadyIndexed = ((res.json \ "hits") \ "total").toString().replaceAll("\"","").toInt
+                println(alreadyIndexed)
+                if (alreadyIndexed == 0) {
+                  processThis = true
+                }
+              }
+              if (processThis) {
                 supervisor ! TweetReceived
 
                 val pattern = "[^0-9]".r
