@@ -4,7 +4,7 @@ import akka.actor._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.iteratee.{Concurrent, Iteratee}
 import play.api.libs.ws.WS
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.{JsValue, Json, JsObject, JsString}
 import play.api.libs.oauth.OAuthCalculator
 
 import org.joda.time.DateTime
@@ -22,7 +22,7 @@ object TwitterClient {
   val elasticPercolatorURL = Conf.get("elastic.PercolatorURL")
   val backOffInterval = 60 * 15 * 1000
   val retryInterval = 60 * 1000
-  val lastPostOrderValue = null
+  var lastPostOrderValue : String = null
 
   def now = DateTime.now.getMillis
 
@@ -48,8 +48,11 @@ object TwitterClient {
   /** Iteratee for processing each chunk from Twitter stream of Tweets. Parses Json chunks 
     * as Tweet instances and publishes them to eventStream. */
   val tweetIteratee = Iteratee.foreach[Array[Byte]] {
+    println("I'm here")
     chunk => {
+      println("I'm here2")
       val chunkString = new String(chunk, "UTF-8")
+      println(chunkString)
       supervisor ! TweetReceived
       
       if (chunkString.contains("Easy there, Turbo. Too many requests recently. Enhance your calm.")) {
@@ -57,23 +60,25 @@ object TwitterClient {
         println("\n" + chunkString + "\n")
       }
           
-      val json = Json.parse(chunkString)
-      lastPostOrderValue = json["order_by_value"]
-
-      json["id"] = json["status_id"]
-      json.pop("status_id")
+      var json = Json.parse(chunkString)
+      lastPostOrderValue = (json \ "order_by_value").toString()
+      
       val pattern = "[^0-9]".r
-      val date = json["created_at"]
+      var date : String = (json \ "created_at").toString()
       date = date.substring(date.indexOf(">"))
       date = pattern replaceAllIn(date, "")
       date = date.substring(0,4) + "-" + date.substring(4,6) + "-" + date.substring(6,8)
-      json["date"] = date
-      val html_text = scala.xml.XML.loadString(json["text"])
+ 
+      val html_text = scala.xml.XML.loadString((json \ "text").toString())
       val text = html_text.text
-      json["text"] = text
 
-      (json \ "id").asOpt[String].map { id => WS.url(elasticTweetURL + id).put(json) }
-      matchAndPush(json)
+      var weibopost : JsObject = Json.obj(
+          "text" -> text,
+          "date" -> date,
+          "id" -> json \ "status_id"
+        )
+      (weibopost \ "id").asOpt[String].map { id => WS.url(elasticTweetURL + id).put(json) }
+      matchAndPush(weibopost)
     }
   }
   
@@ -81,11 +86,56 @@ object TwitterClient {
     * Can this be ended explicitly from here though, without resetting the whole underlying clinet? */
   def start() {
     println("Starting client for topics " + topics)
-    val url = twitterURL + topics.mkString("%2B").replace(" ", "%20")
+    var url = twitterURL + topics.mkString("%2B").replace(" ", "%20")
     if (lastPostOrderValue != null) {
-      url += "&min-order-by-value="+lastPostOrderValue
+      url = url + "&min-order-by-value="+lastPostOrderValue.replaceAll("\"", "")
     }
-    WS.url(url).withRequestTimeout(-1).get(_ => tweetIteratee)
+    // WS.url(url).get(_ => tweetIteratee)
+    WS.url(url).get().map { response =>
+      (response.json \ "messages") match {
+        case JsObject(posts) => {
+          
+      posts.map({i => 
+      var json = i._2
+   
+      lastPostOrderValue = (json \ "order_by_value").toString()
+      
+      val pattern = "[^0-9]".r
+      var date : String = (json \ "created_at").toString()
+      date = date.substring(date.indexOf(">"))
+      date = pattern replaceAllIn(date, "")
+      date = date.substring(0,4) + "-" + date.substring(4,6) + "-" + date.substring(6,8)
+ 
+      val html_text = scala.xml.XML.loadString((json \ "text").toString())
+      
+
+
+      val text = html_text.text
+      println(text)
+      var weibopost : JsObject = Json.obj(
+          "text" -> text,
+          "date" -> date,
+          "id" -> json \ "id",
+          "status_id" -> json \ "status_id",
+          "profile_image_url" -> json \ "profile_image_url",
+          "reposts_count" -> json \ "reposts_count",
+          "hotness" -> json \ "hotness",
+          "user_followers_count" -> json \ "user_followers_count",
+          "user_id" -> json \ "user_id",
+          "user_name" -> json \ "user_name",
+          "censored" -> json \ "censored",
+          "deleted" -> json \ "deleted",
+          "order_by_value" -> json \ "order_by_value"
+          )
+      println(weibopost)
+      (weibopost \ "id").asOpt[String].map { id => WS.url(elasticTweetURL + id).put(weibopost) }
+      matchAndPush(weibopost)
+      })
+        }
+        case _ => println("received something else")
+      }
+      
+    }
     // WS.url(url).withRequestTimeout(-1).sign(OAuthCalculator(Conf.consumerKey, Conf.accessToken)).get(_ => tweetIteratee)
   }
 
