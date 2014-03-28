@@ -62,12 +62,14 @@ object TwitterClient {
 
       (json \ "id").asOpt[String].map { id => WS.url(elasticTweetURL + id).put(json) }
       json["text"].
+      val pattern = "[^0-9]".r
+      json["date"] = pattern replaceAllIn(json["created_at"], "").substring(0,8)
       matchAndPush(json)
     }
   }
   
   /** Starts new WS connection to Twitter Streaming API. Twitter disconnects the previous one automatically.
-    * Can this be ended explicitly from here though, without resetting the whole underlying client? */
+    * Can this be ended explicitly from here though, without resetting the whole underlying clinet? */
   def start() {
     println("Starting client for topics " + topics)
     val url = twitterURL + topics.mkString("%2B").replace(" ", "%20")
