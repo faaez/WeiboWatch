@@ -10,7 +10,7 @@
         <span class="username" ng-bind="tweet.user_name"></span>
     </a>
     <span class="username_screen">&#64;{{tweet.user_name}}</span>
-    <div class="pull-right timeInterval">{{tweet.date | fromNow }} </div>
+    <div class="pull-right timeInterval">{{tweet.datetime | fromNow }} </div>
     <div class="tweettext">
         <div ng-bind-html-unsafe="tweet.htmlText"></div>
         <div class="pull-left timeInterval">{{tweet.user_followers_count | numberFormat}} followers</div>
