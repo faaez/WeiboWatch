@@ -51,6 +51,7 @@ object TwitterClient {
     println("Starting client for topics " + topics)
     var url = twitterURL + java.net.URLEncoder.encode(topics.mkString("+").replace(" ", "%20"), "UTF-8")
     // WS.url(url).get(_ => tweetIteratee)
+    println(url)
     WS.url(url).get().map { response =>
       (response.json \ "messages") match {
         case JsObject(posts) => {
@@ -58,12 +59,10 @@ object TwitterClient {
             var json = i._2
             WS.url(elasticTweetURL+"_search?q=id:"+(json \ "id").toString().replaceAll("\"","")).get().map { res => 
               var processThis : Boolean = false
-              println((res.json \\ "status")(0).toString())
-              if ((res.json \\ "status")(0).toString() == "400") {
-                println("yeah success")
+              if (res.status == 400) {
                 processThis = true
               }
-              else {
+              else if (res.status == 200) {
                 val alreadyIndexed = ((res.json \ "hits") \ "total").toString().replaceAll("\"","").toInt
                 println(alreadyIndexed)
                 if (alreadyIndexed == 0) {

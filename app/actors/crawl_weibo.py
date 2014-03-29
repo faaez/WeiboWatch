@@ -18,16 +18,16 @@ client = MongoClient()
 collection = client.sinaweibo.npc
 datelimit = datetime.strptime("20140301", "%Y%m%d")
 post_datetime = datetime.now()
-query = urllib.quote(u'十二届全国人大二次会议'.encode('utf-8'))
-query += '+'+urllib.quote(u'两会'.encode('utf-8'))
-query += '+'+urllib.quote(u'人大会议'.encode('utf-8'))
+query = urllib.quote(u'腐败'.encode('utf-8'))
+# query += '+'+urllib.quote(u'两会'.encode('utf-8'))
+# query += '+'+urllib.quote(u'人大会议'.encode('utf-8'))
 
-base_url = "https://freeweibo.com/get-from-cache.php?latest=&q="+query
+base_url = "https://freeweibo.com/get-from-cache.php?latest=&q="#+query
 browser = mechanize.Browser()
 
 es = Elasticsearch(['teneo.cloudapp.net:9200'])
 
-topic_index = 'weibowatch_tech'
+topic_index = 'weibowatch_general'
 
 
 def process_batch(batch):
@@ -44,7 +44,7 @@ def process_batch(batch):
             continue
         parsed_date = re.sub("[^0-9]", "", date[string.find(date, ">")+1:])[0:12]
         parsed_date = parsed_date[0:4]+"-"+parsed_date[4:6]+"-"+parsed_date[6:8]+" "+parsed_date[8:10]+":"+parsed_date[10:12]+" CST"
-        post_datetime = datetime.strptime(parsed_date, "%Y-%m-%d")
+        post_datetime = datetime.strptime(parsed_date[0:10], "%Y-%m-%d")
         
         tbp["text"] = BeautifulSoup(batch["messages"][content]["text"]).getText()
         tbp["datetime"] = parsed_date
