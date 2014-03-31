@@ -81,6 +81,8 @@ object TwitterClient {
                 val div_pattern = "<div[^>]*?>.*?</div>".r
                 val a_pattern = "<a[^>]*?>.*?</a>".r
                 val img_pattern = "<img[^>]*?/>".r
+                val span_pattern = "<span[^>]*?>.*?</span>"
+                text = span_pattern replaceAllIn(text, "")
                 text = div_pattern replaceAllIn(text, "")
                 text = a_pattern replaceAllIn(text, "")
                 text = img_pattern replaceAllIn(text, "")
