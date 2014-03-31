@@ -59,7 +59,7 @@ object TwitterClient {
             var json = i._2
             WS.url(elasticTweetURL+"_search?q=id:"+(json \ "id").toString().replaceAll("\"","")).get().map { res => 
               var processThis : Boolean = false
-              if (res.status == 400) {
+              if (res.status == 404) {
                 processThis = true
               }
               else if (res.status == 200) {
