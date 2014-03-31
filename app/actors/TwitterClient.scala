@@ -64,7 +64,6 @@ object TwitterClient {
               }
               else if (res.status == 200) {
                 val alreadyIndexed = ((res.json \ "hits") \ "total").toString().replaceAll("\"","").toInt
-                println(alreadyIndexed)
                 if (alreadyIndexed == 0) {
                   processThis = true
                 }
