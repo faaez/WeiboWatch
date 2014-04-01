@@ -57,13 +57,13 @@ object TwitterClient {
         case JsObject(posts) => {
           posts.map({i => 
             var json = i._2
-            WS.url(elasticTweetURL+"_search?q=id:"+(json \ "id").toString().replaceAll("\"","")).get().map { res => 
+            WS.url(elasticTweetURL+"_count?q=id:"+(json \ "id").toString().replaceAll("\"","")).get().map { res => 
               var processThis : Boolean = false
               if (res.status == 404) {
                 processThis = true
               }
               else if (res.status == 200) {
-                val alreadyIndexed = ((res.json \ "hits") \ "total").toString().replaceAll("\"","").toInt
+                val alreadyIndexed = (res.json \ "count").toString().replaceAll("\"","").toInt
                 if (alreadyIndexed == 0) {
                   processThis = true
                 }
