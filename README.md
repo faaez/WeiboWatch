@@ -32,6 +32,6 @@ And inside the application folder:
     play run
 
 ##Configuration
-Inside `conf/application.conf` you can change terms that the application subscribes to from the Twitter Streaming API. The application will then receive all tweets that contain one or more of the set of terms if the total number of tweets that match are no more than 1% of all tweets that Twitter is receiving at any time. Otherwise, the delivery will be capped at 1%. Since February 2014 you can now also subscribe to tweets from a list of twitter IDs, either in addition to the terms or exclusively (in that case: `application.topics=""`).
+Inside `conf/application.conf` you can change terms that the application on Freeweibo.com. Leaving the terms empty will collect all posts on Freeweibo.com. 
 
 You may want to remove Google Analytics script in main.scala.html or adapt the Analytics setting in the application.conf according to your own needs.
