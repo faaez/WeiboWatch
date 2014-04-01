@@ -20,7 +20,7 @@ angular.module('birdwatch.services').factory('cf', function (utils) {
 
     // Higher-order function, returns a function that rounds time down. Interval s is specified in seconds.
     // Example: returned function makes Jan 1, 2012, 16:45:00 out of Jan 1, 2012, 16:45:55 when interval is 60s
-    function dateRound(s) { return function(t) { return s * Math.floor(Date.parse(t.datetime+" +0800") / (s * 1000)) }; }
+    function dateRound(s) { return function(t) { return s * Math.floor(Date.UTC(t.datetime+" +0800") / (s * 1000)) }; }
 
     var byMinGrp   = cf.dimension(dateRound(       60 )).group();
     var by15MinGrp = cf.dimension(dateRound(    15*60 )).group();
