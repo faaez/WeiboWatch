@@ -5,7 +5,7 @@ angular.module('birdwatch.filters', [])
     /** Tweet Card Layout (with external template)*/
     .filter("fromNow", function () {
         return function (date) {
-            var timeString = moment(Date.parse(date + " +0800")).fromNow(true);
+            var timeString = moment.utc(date + " +0800").fromNow(true);
             if (timeString === "a few seconds") { return "just now"; }
             else { return timeString; }
         }
