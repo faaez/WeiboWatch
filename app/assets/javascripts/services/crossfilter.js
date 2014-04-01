@@ -7,6 +7,7 @@ angular.module('birdwatch.services').factory('cf', function (utils) {
     // crossfilter object: browser side analytics library, holds array type data (w/incremental updates).
     // dimensions are fast queries on data, e.g. view sorted by followers_count or retweet_count of the original message
     var cf = crossfilter([]);
+    var timeDim = cf.dimension(function(t) { t.mstime = Date.UTC(t.datetime+" +0800"); return mstime; });
     var tweetIdDim   = cf.dimension(function(t) { return t.id; });
     var followersDim = cf.dimension(function(t) { return t.user_followers_count; });
     var retweetsDim  = cf.dimension(function(t) {
@@ -20,7 +21,7 @@ angular.module('birdwatch.services').factory('cf', function (utils) {
 
     // Higher-order function, returns a function that rounds time down. Interval s is specified in seconds.
     // Example: returned function makes Jan 1, 2012, 16:45:00 out of Jan 1, 2012, 16:45:55 when interval is 60s
-    function dateRound(s) { return function(t) { return s * Math.floor(Date.UTC(t.datetime+" +0800") / (s * 1000)) }; }
+    function dateRound(s) { return function(t) { return s * Math.floor(t.mstime / (s * 1000)) }; }
 
     var byMinGrp   = cf.dimension(dateRound(       60 )).group();
     var by15MinGrp = cf.dimension(dateRound(    15*60 )).group();
@@ -69,7 +70,7 @@ angular.module('birdwatch.services').factory('cf', function (utils) {
     // fetch tweets from crossfilter dimension associated with particular sort order up to the current page,
     // potentially mapped and filtered
     var fetchTweets = function(pageSize, order) {
-           if (order === "latest")    { return tweetIdDim.top(pageSize); }    // latest: desc order of tweets by ID
+           if (order === "latest")    { return timeDim.top(pageSize); }    // latest: desc order of tweets by time
       else if (order === "followers") { return followersDim.top(pageSize).map(maxRetweets); } // desc order of tweets by followers
       else if (order === "retweets")  { // descending order of tweets by total retweets of original message
           return _.first(               // filtered to be unique, would appear for each retweet in window otherwise
