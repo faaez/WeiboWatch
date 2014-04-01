@@ -5,6 +5,12 @@ A live monitor for Sina Weibo based on Matthias Nehlsen's excellent <a href="htt
 
 The posts are crawled from http://freeweibo.com and contain both censored and uncensored content.
 
+##Features
+
+###Chinese NLP
+
+Herman Schaaf's <a href="https://github.com/hermanschaaf/jieba-js">jieba-js</a> library is used for chunking Chinese text.
+
 ##Setup
 
 Play Framework. You need a JVM on your machine. On a Mac the easiest way is to then install play using **[HomeBrew](http://brew.sh)**: 
