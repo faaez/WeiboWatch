@@ -7,7 +7,7 @@ angular.module('birdwatch.services').factory('cf', function (utils) {
     // crossfilter object: browser side analytics library, holds array type data (w/incremental updates).
     // dimensions are fast queries on data, e.g. view sorted by followers_count or retweet_count of the original message
     var cf = crossfilter([]);
-    var timeDim = cf.dimension(function(t) { t.mstime = Date.UTC(t.datetime+" +0800"); return t.mstime; });
+    var timeDim = cf.dimension(function(t) { t.mstime = moment.utc(t.datetime+" +0800")._d.getTime(); return t.mstime; });
     var tweetIdDim   = cf.dimension(function(t) { return t.id; });
     var followersDim = cf.dimension(function(t) { return t.user_followers_count; });
     var retweetsDim  = cf.dimension(function(t) {
