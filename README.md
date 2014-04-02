@@ -38,6 +38,6 @@ And inside the application folder:
     play run
 
 ##Configuration
-Inside `conf/application.conf` you can change terms that the application on Freeweibo.com. Leaving the terms empty will collect all posts on Freeweibo.com. 
+Inside `conf/application.conf` you can change terms that the application searches on Freeweibo.com. Leaving the terms empty will collect all posts on Freeweibo.com. 
 
 You may want to remove Google Analytics script in main.scala.html or adapt the Analytics setting in the application.conf according to your own needs.
