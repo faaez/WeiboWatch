@@ -39,7 +39,7 @@ angular.module('birdwatch.services').factory('cf', function (utils) {
 
     // freeze imposes filter on crossfilter that only shows anything older than and including the latest
     // tweet at the time of calling freeze. Accordingly unfreeze clears the filter
-    exports.freeze    = function() { tweetIdDim.filter([0, tweetIdDim.top(1)[0].id]); };
+    exports.freeze    = function() { tweetIdDim.filter([0, tweetIdDim.top(1)[0].mstime]); };
     exports.unfreeze  = function() { tweetIdDim.filterAll(); };
 
     exports.add       = function(data)     { cf.add(data); };                            // add new items, as array
