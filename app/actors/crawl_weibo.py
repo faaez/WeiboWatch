@@ -16,7 +16,7 @@ from bs4 import BeautifulSoup
 
 client = MongoClient()
 collection = client.sinaweibo.npc
-datelimit = datetime.strptime("20140301", "%Y%m%d")
+datelimit = datetime.strptime("20131001", "%Y%m%d")
 post_datetime = datetime.now()
 query = urllib.quote(u'腐败'.encode('utf-8'))
 # query += '+'+urllib.quote(u'两会'.encode('utf-8'))
@@ -35,16 +35,16 @@ def process_batch(batch):
     global max_value
 
     for content in batch["messages"]:
+        if "hidden" in batch["messages"][content].keys():
+            continue
         tbp = {}
         max_value = batch["messages"][content]["order_by_value"]
         date = batch["messages"][content]["created_at"]
             
         # print batch["messages"][content]
-        if string.find(date, ">2013") != -1:
-            continue
         parsed_date = re.sub("[^0-9]", "", date[string.find(date, ">")+1:])[0:12]
         parsed_date = parsed_date[0:4]+"-"+parsed_date[4:6]+"-"+parsed_date[6:8]+" "+parsed_date[8:10]+":"+parsed_date[10:12]+" CST"
-        post_datetime = datetime.strptime(parsed_date[0:10], "%Y-%m-%d")
+        post_datetime = datetime.strptime(parsed_date[0:8], "%Y-%m-%d")
         
         tbp["text"] = BeautifulSoup(batch["messages"][content]["text"]).getText()
         tbp["datetime"] = parsed_date
