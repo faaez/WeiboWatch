@@ -49,71 +49,73 @@ object TwitterClient {
     * Can this be ended explicitly from here though, without resetting the whole underlying clinet? */
   def start() {
     println("Starting client for topics " + topics)
-    var url = twitterURL + java.net.URLEncoder.encode(topics.mkString("+").replace(" ", "%20"), "UTF-8")
-    // WS.url(url).get(_ => tweetIteratee)
-    println(url)
-    WS.url(url).get().map { response =>
-      (response.json \ "messages") match {
-        case JsObject(posts) => {
-          posts.map({i => 
-            var json = i._2
-            WS.url(elasticTweetURL+"_count?q=id:"+(json \ "id").toString().replaceAll("\"","")).get().map { res => 
-              var processThis : Boolean = false
-              if (res.status == 404) {
-                processThis = true
-              }
-              else if (res.status == 200) {
-                val alreadyIndexed = (res.json \ "count").toString().replaceAll("\"","").toInt
-                if (alreadyIndexed == 0) {
+    topics foreach {topic =>
+      var url = twitterURL + java.net.URLEncoder.encode(topic, "UTF-8")
+      // WS.url(url).get(_ => tweetIteratee)
+      println(url)
+      WS.url(url).get().map { response =>
+        (response.json \ "messages") match {
+          case JsObject(posts) => {
+            posts.map({i => 
+              var json = i._2
+              WS.url(elasticTweetURL+"_count?q=id:"+(json \ "id").toString().replaceAll("\"","")).get().map { res => 
+                var processThis : Boolean = false
+                if (res.status == 404) {
                   processThis = true
                 }
+                else if (res.status == 200) {
+                  val alreadyIndexed = (res.json \ "count").toString().replaceAll("\"","").toInt
+                  if (alreadyIndexed == 0) {
+                    processThis = true
+                  }
+                }
+                if (processThis) {
+                  supervisor ! TweetReceived
+  
+                  val pattern = "[^0-9]".r
+                  var date : String = (json \ "created_at").toString()
+                  date = date.substring(date.indexOf(">"))
+                  date = pattern replaceAllIn(date, "")
+                  date = date.substring(0,4) + "-" + date.substring(4,6) + "-" + date.substring(6,8) + " " + date.substring(8,10) + ":" + date.substring(10,12) + " CST"
+                  var text : String = (json \ "text").toString()
+                  val div_pattern = "<div[^>]*?>.*?</div>".r
+                  val a_pattern = "<a[^>]*?>.*?</a>".r
+                  val img_pattern = "<img[^>]*?/>".r
+                  val span_begin_pattern = "<span[^>]*?>".r
+                  val span_end_pattern = "</span>".r
+                  text = span_begin_pattern replaceAllIn(text, "")
+                  text = span_end_pattern replaceAllIn(text, "")
+                  text = div_pattern replaceAllIn(text, "")
+                  text = a_pattern replaceAllIn(text, "")
+                  text = img_pattern replaceAllIn(text, "")
+                  
+  
+                  var weibopost : JsObject = Json.obj(
+                      "text" -> text,
+                      "datetime" -> date,
+                      "id" -> json \ "id",
+                      "status_id" -> json \ "status_id",
+                      "profile_image_url" -> json \ "profile_image_url",
+                      "reposts_count" -> json \ "reposts_count",
+                      "hotness" -> json \ "hotness",
+                      "user_followers_count" -> json \ "user_followers_count",
+                      "user_id" -> json \ "user_id",
+                      "user_name" -> json \ "user_name",
+                      "censored" -> json \ "censored",
+                      "deleted" -> json \ "deleted",
+                      "order_by_value" -> json \ "order_by_value"
+                      )
+  
+                  (weibopost \ "id").asOpt[String].map { id => WS.url(elasticTweetURL + id).put(weibopost) }
+                  matchAndPush(weibopost)
               }
-              if (processThis) {
-                supervisor ! TweetReceived
-
-                val pattern = "[^0-9]".r
-                var date : String = (json \ "created_at").toString()
-                date = date.substring(date.indexOf(">"))
-                date = pattern replaceAllIn(date, "")
-                date = date.substring(0,4) + "-" + date.substring(4,6) + "-" + date.substring(6,8) + " " + date.substring(8,10) + ":" + date.substring(10,12) + " CST"
-                var text : String = (json \ "text").toString()
-                val div_pattern = "<div[^>]*?>.*?</div>".r
-                val a_pattern = "<a[^>]*?>.*?</a>".r
-                val img_pattern = "<img[^>]*?/>".r
-                val span_begin_pattern = "<span[^>]*?>".r
-                val span_end_pattern = "</span>".r
-                text = span_begin_pattern replaceAllIn(text, "")
-                text = span_end_pattern replaceAllIn(text, "")
-                text = div_pattern replaceAllIn(text, "")
-                text = a_pattern replaceAllIn(text, "")
-                text = img_pattern replaceAllIn(text, "")
-                
-
-                var weibopost : JsObject = Json.obj(
-                    "text" -> text,
-                    "datetime" -> date,
-                    "id" -> json \ "id",
-                    "status_id" -> json \ "status_id",
-                    "profile_image_url" -> json \ "profile_image_url",
-                    "reposts_count" -> json \ "reposts_count",
-                    "hotness" -> json \ "hotness",
-                    "user_followers_count" -> json \ "user_followers_count",
-                    "user_id" -> json \ "user_id",
-                    "user_name" -> json \ "user_name",
-                    "censored" -> json \ "censored",
-                    "deleted" -> json \ "deleted",
-                    "order_by_value" -> json \ "order_by_value"
-                    )
-
-                (weibopost \ "id").asOpt[String].map { id => WS.url(elasticTweetURL + id).put(weibopost) }
-                matchAndPush(weibopost)
-            }
-            }
-          })
+              }
+            })
+          }
+          case _ => println("received something else")
         }
-        case _ => println("received something else")
+        
       }
-      
     }
     // WS.url(url).withRequestTimeout(-1).sign(OAuthCalculator(Conf.consumerKey, Conf.accessToken)).get(_ => tweetIteratee)
   }
