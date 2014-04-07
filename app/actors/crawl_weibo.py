@@ -8,7 +8,7 @@ import sys
 from datetime import datetime
 from time import sleep
 from pymongo import MongoClient
-import urllib
+import urllib, urllib2
 from elasticsearch import Elasticsearch
 global post_datetime
 global max_value
@@ -16,19 +16,21 @@ from bs4 import BeautifulSoup
 
 client = MongoClient()
 collection = client.sinaweibo.npc
+
+#date you want to go back to
 datelimit = datetime.strptime("20131001", "%Y%m%d")
 post_datetime = datetime.now()
-query = urllib.quote(u'腐败'.encode('utf-8'))
-# query += '+'+urllib.quote(u'两会'.encode('utf-8'))
-# query += '+'+urllib.quote(u'人大会议'.encode('utf-8'))
 
-base_url = "https://freeweibo.com/get-from-cache.php?latest=&q="#+query
+#define query
+query = urllib.quote(u''.encode('utf-8'))
+
+base_url = "https://freeweibo.com/get-from-cache.php?latest=&q="+query
 browser = mechanize.Browser()
 
-es = Elasticsearch(['teneo.cloudapp.net:9200'])
-
+es_server = 'localhost:9200'
 topic_index = 'weibowatch_general'
 
+es = Elasticsearch([es_server])
 
 def process_batch(batch):
     global post_datetime
@@ -44,7 +46,7 @@ def process_batch(batch):
         # print batch["messages"][content]
         parsed_date = re.sub("[^0-9]", "", date[string.find(date, ">")+1:])[0:12]
         parsed_date = parsed_date[0:4]+"-"+parsed_date[4:6]+"-"+parsed_date[6:8]+" "+parsed_date[8:10]+":"+parsed_date[10:12]+" CST"
-        post_datetime = datetime.strptime(parsed_date[0:8], "%Y-%m-%d")
+        post_datetime = datetime.strptime(parsed_date[0:10], "%Y-%m-%d")
         
         tbp["text"] = BeautifulSoup(batch["messages"][content]["text"]).getText()
         tbp["datetime"] = parsed_date
@@ -59,8 +61,10 @@ def process_batch(batch):
         tbp["censored"] = batch["messages"][content]["censored"]
         tbp["deleted"] = batch["messages"][content]["deleted"]
         tbp["order_by_value"] = batch["messages"][content]["order_by_value"]
-
-        es.index(index=topic_index, doc_type='post', body=tbp)
+	
+        res = json.loads(browser.open('http://'+es_server+'/'+topic_index+'/_count?q=id:'+tbp["id"]).read())
+        if int(res["count"]) == 0: 
+            es.index(index=topic_index, doc_type='post', body=tbp)
 
 if len(sys.argv) == 1:
     process_batch(json.loads(browser.open(base_url).read()))
